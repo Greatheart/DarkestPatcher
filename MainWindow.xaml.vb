@@ -153,7 +153,7 @@ Class MainWindow
                     Do Until y = 3
                         y = y + 1
                         If y = 1 Then oOSearchStr = "resistances:"
-                        If y = 2 Then oOSearchStr = Strings.Left(oOModLine, FindN(".", oOModLine, 2)) 'combat_skill: .id "mace_bash" .
+                        If y = 2 Then oOSearchStr = Strings.Left(oOModLine, FindN(".", oOModLine, 3)) 'combat_skill: .id "mace_bash" .level 0 .
                         If y = 3 Then oOSearchStr = "commonfx:"
 
                         If Len(oOSearchStr) > 0 Then
