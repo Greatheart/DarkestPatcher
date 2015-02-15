@@ -3,6 +3,7 @@ Imports System.IO
 Imports Microsoft.VisualBasic
 
 Class MainWindow
+
     Public Class FileHelper
         Public Shared Function GetFilesRecursive(ByVal initial As String) As List(Of String)
             ' This list stores the results.
@@ -99,13 +100,15 @@ Class MainWindow
 
     Private Sub PatchFiles(oOBasePath As String, oOModPath As String, oOFilePath As String)
 
-        '################################################
-        '# Works with:                                  #
-        '# \scripts\effects.darkest                     #
-        '# \heroes\[hero name]\[hero name].info.darkest #
-        '# \heroes\[hero name]\[hero name].art.darkest  #
-        '# \inventory\inventory.darkest                 #
-        '################################################
+        '########################################################
+        '# Works with:                                          #
+        '# \scripts\effects.darkest                             #
+        '# \heroes\[hero name]\[hero name].info.darkest         #
+        '# \heroes\[hero name]\[hero name].art.darkest          #
+        '# \inventory\inventory.darkest                         #
+        '# \monsters\[monster name]\[monster name].info.darkest #
+        '# \monsters\[monster name]\[monster name].art.darkest  #
+        '########################################################
 
         Dim oOSubFolder As String = Strings.Left(oOFilePath, InStrRev(oOFilePath, "\", -1, CompareMethod.Text))
         Dim oOSearchStr As String = ""
@@ -122,6 +125,8 @@ Class MainWindow
             For Each oOModLine As String In oOModText
                 If Strings.Left(oOModLine, 1) = "*" Or Len(oOModLine) < 1 Then GoTo SkipLine
                 i = 0
+
+
                 If oOSubFolder = "scripts\" Then
                     'MsgBox("Editing scripts")
                     oOSearchStr = Strings.Left(oOModLine, InStr(oOModLine, ".curio_result_type", CompareMethod.Text) + 17)
@@ -141,23 +146,61 @@ Class MainWindow
                         If i < 1 Then MsgBox("Could not find: " & oOSearchStr)
                     End If
 
+
                 ElseIf Strings.Left(oOSubFolder, 7) = "heroes\" Then
                     '    MsgBox("Editing heroes")
                     y = 0
-                    Do Until y = 2
+                    Do Until y = 3
                         y = y + 1
                         If y = 1 Then oOSearchStr = "resistances:"
                         If y = 2 Then oOSearchStr = Strings.Left(oOModLine, FindN(".", oOModLine, 2)) 'combat_skill: .id "mace_bash" .
+                        If y = 3 Then oOSearchStr = "commonfx:"
 
                         If Len(oOSearchStr) > 0 Then
                             For Each oOBaseLine In Filter(oOBaseText, oOSearchStr)
-                                If oOBaseLine.StartsWith(oOSearchStr) Then
-                                    i = i + 1
-                                    'MsgBox("Lookfor: " & oOSearchStr & vbNewLine & vbNewLine & "Result: " & oOBaseLine)
+                                If oOModLine.StartsWith(oOSearchStr) Then
+                                    If oOBaseLine.StartsWith(oOSearchStr) Then
+                                        i = i + 1
+                                        'MsgBox("Lookfor: " & oOSearchStr & vbNewLine & vbNewLine & "Result: " & oOBaseLine)
 
-                                    RichTextBox_ModLines.AppendText(Environment.NewLine + "Replaced 'heroes' line: " + Environment.NewLine + oOModLine.Replace(vbTab, " ") + Environment.NewLine)
+                                        RichTextBox_ModLines.AppendText(Environment.NewLine + "Replaced 'heroes' line: " + Environment.NewLine + oOModLine.Replace(vbTab, " ") + Environment.NewLine)
 
-                                    System.IO.File.WriteAllText(oOBasePath & oOFilePath, System.IO.File.ReadAllText(oOBasePath & oOFilePath).Replace(oOBaseLine, oOModLine))
+                                        System.IO.File.WriteAllText(oOBasePath & oOFilePath, System.IO.File.ReadAllText(oOBasePath & oOFilePath).Replace(oOBaseLine, oOModLine))
+                                    End If
+                                End If
+                            Next
+
+                            'If i < 1 Then MsgBox("Could not find: " & oOSearchStr)
+                        End If
+                    Loop
+
+
+                ElseIf Strings.Left(oOSubFolder, 9) = "monsters\" Then
+                    '    MsgBox("Editing monsters")
+                    y = 0
+                    Do Until y = 9
+                        y = y + 1
+                        If y = 1 Then oOSearchStr = "display:"
+                        If y = 2 Then oOSearchStr = "enemy_type:"
+                        If y = 3 Then oOSearchStr = "stats:"
+                        If y = 4 Then oOSearchStr = Strings.Left(oOModLine, FindN(".", oOModLine, 2)) 'skill: .id "slime" .
+                        If y = 5 Then oOSearchStr = "personality:"
+                        If y = 6 Then oOSearchStr = "loot:"
+                        If y = 7 Then oOSearchStr = "initiative:"
+                        If y = 8 Then oOSearchStr = "monster_brain:"
+                        If y = 9 Then oOSearchStr = "commonfx:"
+
+                        If Len(oOSearchStr) > 0 Then
+                            For Each oOBaseLine In Filter(oOBaseText, oOSearchStr)
+                                If oOModLine.StartsWith(oOSearchStr) Then
+                                    If oOBaseLine.StartsWith(oOSearchStr) Then
+                                        i = i + 1
+                                        'MsgBox("Lookfor: " & oOSearchStr & vbNewLine & vbNewLine & "Result: " & oOBaseLine)
+
+                                        RichTextBox_ModLines.AppendText(Environment.NewLine + "Replaced 'monsters' line: " + Environment.NewLine + oOModLine.Replace(vbTab, " ") + Environment.NewLine)
+
+                                        System.IO.File.WriteAllText(oOBasePath & oOFilePath, System.IO.File.ReadAllText(oOBasePath & oOFilePath).Replace(oOBaseLine, oOModLine))
+                                    End If
                                 End If
                             Next
 
