@@ -86,13 +86,18 @@ Class MainWindow
 
         RichTextBox_ModLines.Document.Blocks.Clear()
 
+        RichTextBox_ModLines.AppendText(Environment.NewLine + "Starting File Patching of: " + oOModPath + Environment.NewLine)
+
         ' Loop through and display each path.
         For Each path In list
             Dim oOTempStr As String = Right(path, Len(path) - Len(oOModPath))
-            If oOTempStr <> "DarkestPatcher.txt" Then
+            If Strings.Right(oOTempStr, 18) <> "DarkestPatcher.txt" And Strings.Right(oOTempStr, 9) <> "Thumbs.db" Then
+                RichTextBox_ModLines.AppendText(Environment.NewLine + "  Processing file: " + oOTempStr)
                 Call PatchFiles(oOBasePath, oOModPath, oOTempStr)
             End If
         Next
+
+        RichTextBox_ModLines.AppendText(Environment.NewLine + "Completed File Patching of: " + oOModPath + Environment.NewLine)
 
         MsgBox("Complete!")
 
@@ -114,10 +119,9 @@ Class MainWindow
         Dim oOSearchStr As String = ""
         Dim oOBaseLine As String = ""
 
-        'MsgBox(oOBasePath & oOFilePath)
-        'MsgBox(oOModPath & oOFilePath)
-
         If My.Computer.FileSystem.FileExists(oOBasePath & oOFilePath) Then
+            If Strings.Right(oOFilePath, 8) <> ".darkest" Then GoTo SkipFile
+
             Dim oOBaseText() As String = System.IO.File.ReadAllLines(oOBasePath & oOFilePath)
             Dim oOModText() As String = System.IO.File.ReadAllLines(oOModPath & oOFilePath)
             Dim i As Integer, y As Integer
@@ -133,19 +137,32 @@ Class MainWindow
 
                     If Len(oOSearchStr) > 0 Then
                         For Each oOBaseLine In Filter(oOBaseText, oOSearchStr)
+                            If oOBaseLine = oOModLine Then GoTo SkipLine
                             If oOBaseLine.StartsWith(oOSearchStr) Then
                                 i = i + 1
-                                'MsgBox("Lookfor: " & oOSearchStr & vbNewLine & vbNewLine & "Result: " & oOBaseLine)
 
-                                RichTextBox_ModLines.AppendText(Environment.NewLine + "Replaced 'effects.darkest' line: " + Environment.NewLine + oOModLine.Replace(vbTab, " ") + Environment.NewLine)
+                                RichTextBox_ModLines.AppendText(Environment.NewLine + "    Replaced 'effects.darkest' line: " + Environment.NewLine + "      Mod: " + oOModLine.Replace(vbTab, " ") + Environment.NewLine + "      Ori: " & oOBaseLine.Replace(vbTab, " "))
 
                                 System.IO.File.WriteAllText(oOBasePath & oOFilePath, System.IO.File.ReadAllText(oOBasePath & oOFilePath).Replace(oOBaseLine, oOModLine))
+                            Else
+
                             End If
                         Next
 
-                        If i < 1 Then MsgBox("Could not find: " & oOSearchStr)
-                    End If
+                        For Each oOBaseLine In Filter(oOBaseText, oOModLine)
+                            If oOBaseLine.StartsWith(oOModLine) Then
+                                'Skip the line it exists!
+                            Else
+                                If My.Settings.oOAppend = True Then
+                                    RichTextBox_ModLines.AppendText(Environment.NewLine + "    Appended 'effects.darkest' line: " + Environment.NewLine + "      New: " + oOModLine.Replace(vbTab, " ") + Environment.NewLine)
 
+                                    System.IO.File.AppendAllText(oOBasePath & oOFilePath, Environment.NewLine + oOModLine)
+                                Else
+                                    RichTextBox_ModLines.AppendText(Environment.NewLine + "    Could not find: " + Environment.NewLine + "      " + oOModLine + Environment.NewLine)
+                                End If
+                            End If
+                        Next
+                    End If
 
                 ElseIf Strings.Left(oOSubFolder, 7) = "heroes\" Then
                     '    MsgBox("Editing heroes")
@@ -158,19 +175,31 @@ Class MainWindow
 
                         If Len(oOSearchStr) > 0 Then
                             For Each oOBaseLine In Filter(oOBaseText, oOSearchStr)
+                                If oOBaseLine = oOModLine Then GoTo SkipLine
                                 If oOModLine.StartsWith(oOSearchStr) Then
                                     If oOBaseLine.StartsWith(oOSearchStr) Then
-                                        i = i + 1
-                                        'MsgBox("Lookfor: " & oOSearchStr & vbNewLine & vbNewLine & "Result: " & oOBaseLine)
 
-                                        RichTextBox_ModLines.AppendText(Environment.NewLine + "Replaced 'heroes' line: " + Environment.NewLine + oOModLine.Replace(vbTab, " ") + Environment.NewLine)
+                                        RichTextBox_ModLines.AppendText(Environment.NewLine + "    Replaced 'heroes' line: " + Environment.NewLine + "      Mod: " + oOModLine.Replace(vbTab, " ") + Environment.NewLine + "      Ori: " & oOBaseLine.Replace(vbTab, " "))
 
                                         System.IO.File.WriteAllText(oOBasePath & oOFilePath, System.IO.File.ReadAllText(oOBasePath & oOFilePath).Replace(oOBaseLine, oOModLine))
                                     End If
                                 End If
                             Next
 
-                            'If i < 1 Then MsgBox("Could not find: " & oOSearchStr)
+                            For Each oOBaseLine In Filter(oOBaseText, oOModLine)
+                                If oOBaseLine.StartsWith(oOModLine) Then
+                                    'Skip the line it exists!
+                                Else
+                                    If My.Settings.oOAppend = True Then
+                                        RichTextBox_ModLines.AppendText(Environment.NewLine + "    Appended 'heroes' line: " + Environment.NewLine + "      New: " + oOModLine.Replace(vbTab, " ") + Environment.NewLine)
+
+                                        System.IO.File.AppendAllText(oOBasePath & oOFilePath, Environment.NewLine + oOModLine)
+                                    Else
+                                        RichTextBox_ModLines.AppendText(Environment.NewLine + "    Could not find: " + Environment.NewLine + "      " + oOModLine + Environment.NewLine)
+                                    End If
+                                End If
+                            Next
+
                         End If
                     Loop
 
@@ -192,19 +221,31 @@ Class MainWindow
 
                         If Len(oOSearchStr) > 0 Then
                             For Each oOBaseLine In Filter(oOBaseText, oOSearchStr)
+                                If oOBaseLine = oOModLine Then GoTo SkipLine
                                 If oOModLine.StartsWith(oOSearchStr) Then
                                     If oOBaseLine.StartsWith(oOSearchStr) Then
                                         i = i + 1
-                                        'MsgBox("Lookfor: " & oOSearchStr & vbNewLine & vbNewLine & "Result: " & oOBaseLine)
 
-                                        RichTextBox_ModLines.AppendText(Environment.NewLine + "Replaced 'monsters' line: " + Environment.NewLine + oOModLine.Replace(vbTab, " ") + Environment.NewLine)
+                                        RichTextBox_ModLines.AppendText(Environment.NewLine + "    Replaced 'monsters' line: " + Environment.NewLine + "      Mod: " + oOModLine.Replace(vbTab, " ") + Environment.NewLine + "      Ori: " & oOBaseLine.Replace(vbTab, " "))
 
                                         System.IO.File.WriteAllText(oOBasePath & oOFilePath, System.IO.File.ReadAllText(oOBasePath & oOFilePath).Replace(oOBaseLine, oOModLine))
                                     End If
                                 End If
                             Next
 
-                            'If i < 1 Then MsgBox("Could not find: " & oOSearchStr)
+                            For Each oOBaseLine In Filter(oOBaseText, oOModLine)
+                                If oOBaseLine.StartsWith(oOModLine) Then
+                                    'Skip the line it exists!
+                                Else
+                                    If My.Settings.oOAppend = True Then
+                                        RichTextBox_ModLines.AppendText(Environment.NewLine + "    Appended 'monsters' line: " + Environment.NewLine + "      New: " + oOModLine.Replace(vbTab, " ") + Environment.NewLine)
+
+                                        System.IO.File.AppendAllText(oOBasePath & oOFilePath, Environment.NewLine + oOModLine)
+                                    Else
+                                        RichTextBox_ModLines.AppendText(Environment.NewLine + "    Could not find: " + Environment.NewLine + "      " + oOModLine + Environment.NewLine)
+                                    End If
+                                End If
+                            Next
                         End If
                     Loop
 
@@ -216,29 +257,58 @@ Class MainWindow
 
                     If Len(oOSearchStr) > 0 Then
                         For Each oOBaseLine In Filter(oOBaseText, oOSearchStr)
+                            If oOBaseLine = oOModLine Then GoTo SkipLine
                             If oOBaseLine.StartsWith(oOSearchStr) Then
                                 i = i + 1
-                                'MsgBox("Lookfor: " & oOSearchStr & vbNewLine & vbNewLine & "Result: " & oOBaseLine)
 
-                                RichTextBox_ModLines.AppendText(Environment.NewLine + "Replaced 'inventory.darkest' line: " + Environment.NewLine + oOModLine.Replace(vbTab, " ") + Environment.NewLine)
+                                RichTextBox_ModLines.AppendText(Environment.NewLine + "    Replaced 'inventory.darkest' line: " + Environment.NewLine + "      Mod: " + oOModLine.Replace(vbTab, " ") + Environment.NewLine + "      Ori: " & oOBaseLine.Replace(vbTab, " "))
 
                                 System.IO.File.WriteAllText(oOBasePath & oOFilePath, System.IO.File.ReadAllText(oOBasePath & oOFilePath).Replace(oOBaseLine, oOModLine))
                             End If
                         Next
 
-                        'If i < 1 Then MsgBox("Could not find: " & oOSearchStr)
+                        For Each oOBaseLine In Filter(oOBaseText, oOModLine)
+                            If oOBaseLine.StartsWith(oOModLine) Then
+                                'Skip the line it exists!
+                            Else
+                                If My.Settings.oOAppend = True Then
+                                    RichTextBox_ModLines.AppendText(Environment.NewLine + "    Appended 'inventory.darkest' line: " + Environment.NewLine + "      New: " + oOModLine.Replace(vbTab, " ") + Environment.NewLine)
+
+                                    System.IO.File.AppendAllText(oOBasePath & oOFilePath, Environment.NewLine + oOModLine)
+                                Else
+                                    RichTextBox_ModLines.AppendText(Environment.NewLine + "    Could not find: " + Environment.NewLine + "      " + oOModLine + Environment.NewLine)
+                                End If
+                            End If
+                        Next
                     End If
 
                 Else
-                    MsgBox("Not processing: " & oOSubFolder)
+                    RichTextBox_ModLines.AppendText(Environment.NewLine + "    Folder: " + Environment.NewLine + "      " + oOSubFolder + " update is not supported! Folder skipped!" + Environment.NewLine)
+                    'MsgBox("Not processing: " & oOSubFolder)
                     GoTo SkipFile
                 End If
 SkipLine:
             Next
-SkipFile:
         Else
-            MsgBox("File: " & oOBasePath & oOFilePath & " does not exist!")
+            If My.Settings.oOAppend = True Then
+                If My.Computer.FileSystem.DirectoryExists(oOBasePath & oOSubFolder) = False Then
+                    RichTextBox_ModLines.AppendText(Environment.NewLine + "    Folder does not exist, copying folder: '" + Strings.Left(oOModPath, InStrRev(oOModPath, "\", -1, CompareMethod.Text)) + oOFilePath + "'" + Environment.NewLine)
+                    My.Computer.FileSystem.CopyDirectory(oOModPath & oOSubFolder, oOBasePath & oOSubFolder, False)
+                Else
+                    If My.Computer.FileSystem.FileExists(oOBasePath & oOFilePath) = False Then
+                        RichTextBox_ModLines.AppendText(Environment.NewLine + "    File does not exist, copying file: '" + oOModPath + oOFilePath + "'" + Environment.NewLine)
+                        My.Computer.FileSystem.CopyFile(oOModPath & oOFilePath, oOBasePath & oOFilePath, False)
+                    Else
+                        MsgBox("Error Code: 'Inception'" & vbNewLine & "File: " & oOBasePath & oOFilePath & " exists and does not.... (0_0)")
+                    End If
+                End If
+
+                GoTo SkipFile
+            Else
+                RichTextBox_ModLines.AppendText(Environment.NewLine + "    File: " & oOBasePath & oOFilePath & " does not exist!" + Environment.NewLine)
+            End If
         End If
+SkipFile:
     End Sub
 
     Function FindN(sFindWhat As String, sInputString As String, N As Integer) As Integer
@@ -276,8 +346,6 @@ SkipFile:
             End If
         Else
             MsgBox("No prior settings found. Please click the 'Find Game Dir' button.")
-            'Dim oOEXELoc As String = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().CodeBase)
-            'oOGameDirLoc = Right(oOEXELoc, Len(oOEXELoc) - 6)
         End If
 
     End Sub
@@ -380,10 +448,69 @@ SkipFile:
             Button_Patch.Foreground = Brushes.White
             Button_Patch.IsEnabled = True
         Else
-            If My.Computer.FileSystem.FileExists(oOFolderStr) Then
+            If My.Computer.FileSystem.DirectoryExists(Strings.Left(oOFolderStr, Len(oOFolderStr) - 1)) Then
+                Button_Patch.Foreground = Brushes.White
+                Button_Patch.IsEnabled = True
+
+                RichTextBox_ModLines.Document.Blocks.Clear()
+
+                RichTextBox_ModLines.AppendText(Environment.NewLine + "    'DarkestPatcher.txt' not found." + Environment.NewLine)
+                RichTextBox_ModLines.AppendText(Environment.NewLine + "    Mod: '" + oOFolderStr + "' ready to patch!" + Environment.NewLine)
 
             Else
-                MsgBox("'" & oOFolderStr & "' not found!")
+                MsgBox("'" & Strings.Left(oOFolderStr, Len(oOFolderStr) - 1) & "' not found!")
+            End If
+        End If
+    End Sub
+
+    Private Sub CheckBox_AppendData_Checked(sender As Object, e As RoutedEventArgs) Handles CheckBox_AppendData.Checked
+        If CheckBox_AppendData.IsChecked = True Then
+            My.Settings.oOAppend = True
+            My.Settings.Save()
+        Else
+            My.Settings.oOAppend = False
+            My.Settings.Save()
+        End If
+    End Sub
+
+    Private Sub CheckBox_AppendData_UnChecked(sender As Object, e As RoutedEventArgs) Handles CheckBox_AppendData.Unchecked
+        If CheckBox_AppendData.IsChecked = True Then
+            My.Settings.oOAppend = True
+            My.Settings.Save()
+        Else
+            My.Settings.oOAppend = False
+            My.Settings.Save()
+        End If
+    End Sub
+
+    Private Sub Window_Closed(ByValsender As Object, ByVal e As System.EventArgs) Handles Me.Closed
+        My.Settings.oOAppend = False
+        My.Settings.Save()
+    End Sub
+
+    Private Sub Window_Opened(ByValsender As Object, ByVal e As System.EventArgs) Handles Me.Loaded
+        My.Settings.oOCurrModLoc = ""
+        My.Settings.oOAppend = False
+        My.Settings.Save()
+
+        RichTextBox_ModLines.Document.Blocks.Clear()
+
+
+        Button_Patch.Foreground = Brushes.Black
+        Button_Patch.IsEnabled = False
+
+        Dim oOGameDirLoc As String
+
+        If Len(My.Settings.oOGameDir) > 1 Then
+            oOGameDirLoc = My.Settings.oOGameDir
+
+            Dim dir As New IO.DirectoryInfo(oOGameDirLoc)
+            If dir.Exists Then
+                TextBox_GameDir.Text = oOGameDirLoc
+                My.Settings.oOGameDir = oOGameDirLoc
+                My.Settings.Save()
+            Else
+                MsgBox("'" & oOGameDirLoc & "' does not exist!")
             End If
         End If
     End Sub
